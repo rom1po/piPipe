@@ -1,0 +1,6 @@
+[bwa_aln_core] calculate SA coordinate... 0.31 sec
+[bwa_aln_core] write to the disk... 0.00 sec
+[bwa_aln_core] 30530 sequences have been processed.
+[main] Version: 0.7.15-r1140
+[main] CMD: bwa aln -t 8 -n 0 /data/galaxy/galaxy-server/database/jobs_directory/002/2934/dataset_5524_files/dataset_3543.dat_symlink.fa /data/galaxy/galaxy-server/database/jobs_directory/002/2934/dataset_5524_files/dataset_3541/subgroups/bonafide_reads.fastq
+[main] Real time: 0.126 sec; CPU: 0.365 sec

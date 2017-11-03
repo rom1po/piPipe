@@ -1,0 +1,7 @@
+[bwa_aln_core] convert to sequence coordinate... 0.07 sec
+[bwa_aln_core] refine gapped alignments... 0.01 sec
+[bwa_aln_core] print alignments... 0.06 sec
+[bwa_aln_core] 28283 sequences have been processed.
+[main] Version: 0.7.15-r1140
+[main] CMD: bwa samse /data/galaxy/galaxy-server/database/jobs_directory/002/2934/dataset_5524_files/dataset_3542.dat_symlink.fa /dev/stdin /data/galaxy/galaxy-server/database/jobs_directory/002/2934/dataset_5524_files/dataset_3541/subgroups/rejected_exons.fastq
+[main] Real time: 0.451 sec; CPU: 0.178 sec

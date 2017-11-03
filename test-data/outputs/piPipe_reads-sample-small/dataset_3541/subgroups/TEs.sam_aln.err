@@ -1,0 +1,6 @@
+[bwa_aln_core] calculate SA coordinate... 1.13 sec
+[bwa_aln_core] write to the disk... 0.01 sec
+[bwa_aln_core] 28283 sequences have been processed.
+[main] Version: 0.7.15-r1140
+[main] CMD: bwa aln -t 8 -n 3 /data/galaxy/galaxy-server/database/jobs_directory/002/2934/dataset_5524_files/dataset_3542.dat_symlink.fa /data/galaxy/galaxy-server/database/jobs_directory/002/2934/dataset_5524_files/dataset_3541/subgroups/rejected_exons.fastq
+[main] Real time: 0.231 sec; CPU: 1.178 sec
