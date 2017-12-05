@@ -47,7 +47,7 @@ sub details_pages
   open my $h, '>',  $prefix.'-TEs.html' || die "cannot create  $prefix-TEs.html $!\n";
   header($h);
   navbar ( $h, $list_mainTabP, $current );
-  if ( $prefix =~ /bonafide_reads$/ && $ppp eq 'true' )
+  if ( $prefix =~ /piRNAs$/ && $ppp eq 'true' )
   {
   	print $h " <div class=\"container\">";
   	print $h " <p><a class=\"btn\" href=\"$html_ref\">Ping Pong Partners</a></p>\n";
@@ -66,10 +66,10 @@ sub details_pages
   footer($h);
   close $h;
 
-  open  $h, '>',  $prefix.'-exons.html' || die "cannot create  $prefix-exons.html $!\n";
+  open  $h, '>',  $prefix.'-transcripts.html' || die "cannot create  $prefix-transcripts.html $!\n";
   header($h);
   navbar ( $h, $list_mainTabP, $current );
-  fut($h,'Exons',$Hex);
+  fut($h,'transcripts',$Hex);
   footer($h);
   close $h;
 }
@@ -114,7 +114,7 @@ sub ppp_page
  				print $sub "
 					<div align=\"center\">
 					<h2>$id</h2>
-					<p> <img src=\"$id/histogram.png\" width=50%/></p>
+					<p> <img class=\"featurette-image\" src=\"$id/histogram.png\"/></p>
 					<p><a href=\"$id/overlap_size.txt\">ping pong signature</a></p>
 					<p><a href=\"$id/sensPPP.txt\">sens reads with PPP</a></p>
 					<p><a href=\"$id/antisensPPP.txt\">reverse reads  with PPP</a></p>
@@ -183,25 +183,25 @@ sub span
 <div class=\"container  text-center\">
   <div class=\"row-fluid\">
       <div class=\"span6\">
-        <h2>bonafide reads</h2>
+        <h2>Bonafide</h2>
         reads of size between $min and $max<br>with no mi, sn, t and r RNAs
         <p><a class=\"btn\" href=\"$name-bonafide_reads-genome.html\">Genome</a></p>
         <p><a class=\"btn\" href=\"$name-bonafide_reads-TEs.html\">TE</a></p>
-        <p><a class=\"btn\" href=\"$name-bonafide_reads-exons.html\">Exons</a></p>
+        <p><a class=\"btn\" href=\"$name-bonafide_reads-transcripts.html\">Transcripts</a></p>
         <div class=\"row-fluid\">
           <div class=\"span6\">
             <h2>siRNAs</h2>
             bonafide reads of size between $simin and $simax
             <p><a class=\"btn\" href=\"$name-siRNAs-genome.html\">Genome</a></p>
             <p><a class=\"btn\" href=\"$name-siRNAs-TEs.html\">TE</a></p>
-            <p><a class=\"btn\" href=\"$name-siRNAs-exons.html\">Exons</a></p>
+            <p><a class=\"btn\" href=\"$name-siRNAs-transcripts.html\">Transcripts</a></p>
           </div>
           <div class=\"span6\">
             <h2>piRNAs</h2>
             bonafide reads of size between $pimin and $pimax
             <p><a class=\"btn\" href=\"$name-piRNAs-genome.html\">Genome</a></p>
             <p><a class=\"btn\" href=\"$name-piRNAs-TEs.html\">TE</a></p>
-            <p><a class=\"btn\" href=\"$name-piRNAs-exons.html\">Exons</a></p>
+            <p><a class=\"btn\" href=\"$name-piRNAs-transcripts.html\">Transcripts</a></p>
           </div>
         </div>
       </div>
@@ -209,7 +209,7 @@ sub span
        <h2>miRNAs</h2>
        <p><a class=\"btn\" href=\"$name-miRNAs-genome.html\">Genome</a></p>
        <p><a class=\"btn\" href=\"$name-miRNAs-TEs.html\">TE</a></p>
-       <p><a class=\"btn\" href=\"$name-miRNAs-exons.html\">Exons</a></p>
+       <p><a class=\"btn\" href=\"$name-miRNAs-transcripts.html\">Transcripts</a></p>
     </div>
   </div>
 </div>
@@ -237,9 +237,9 @@ sub get_subgroups
     elsif ( $f =~ /genome_minus\.bedgraph$/) { $HG{'bedgraph minus strand'} = $f; }
     elsif ( $f =~ /TEs_plus\.bedgraph$/) { $HTE{'bedgraph plus strand'} = $f; }
     elsif ( $f =~ /TEs_minus\.bedgraph$/) { $HTE{'bedgraph minus strand'} = $f; }
-    elsif ( $f =~ /exons_sorted\.bam$/) { $Hex{'exons mappers (sorted bam)'} = $f;}
-    elsif ( $f =~ /exons_unique_sorted\.bam$/) { $Hex{'exons unique mappers (sorted bam)'} = $f;}        
-    elsif ( $f =~ /exons_reads_counts\.txt$/) { $Hex{'read number per exon (txt)'} = $f;}
+    elsif ( $f =~ /transcripts_sorted\.bam$/) { $Hex{'transcripts mappers (sorted bam)'} = $f;}
+    elsif ( $f =~ /transcripts_unique_sorted\.bam$/) { $Hex{'transcripts unique mappers (sorted bam)'} = $f;}        
+    elsif ( $f =~ /transcripts_reads_counts\.txt$/) { $Hex{'read number per transcript (txt)'} = $f;}
     elsif ( $f =~ /TEs_reads_counts\.txt$/) { $HTE{"read number per TE 0 to $misTE mismatches (txt)"} = $f; }
     elsif ( $f =~ /TEs_reads_counts_mismatches\.txt$/) { $HTE{"read number per TE with 1 to $misTE mismatches (txt)"} = $f; }
     elsif ( $f =~ /TEs_reads_counts_nomismatches\.txt$/) { $HTE{'read number per TE with no mismatch (txt)'} = $f; }
@@ -466,7 +466,7 @@ sub header
 
   .featurette-image {
   margin-top: 10px; /* Vertically center images part 3: negative margin up the image the same amount of the padding to center it. */
-  width: 600px;
+  width: 450px;
   height: auto;
   }
 
@@ -746,11 +746,11 @@ sub get_distri_exon
 {
   my ($dir, $name) = @_;
   my (@out,@group);
-  my $group = $dir.'/'.$name.'-subgroups-bonafide_reads-exons-*distribution-*.png';
+  my $group = $dir.'/'.$name.'-subgroups-bonafide_reads-transcripts-*distribution-*.png';
   @group = glob $group;
   foreach (my $g =0; $g <= $#group; $g++)
   {
-    if ($group[$g] =~ /.*($name-subgroups-bonafide_reads-exons-.*distribution-.*\.png)/ )
+    if ($group[$g] =~ /.*($name-subgroups-bonafide_reads-transcripts-.*distribution-.*\.png)/ )
     {
       my $tmp = $1;
       push @out, $1;

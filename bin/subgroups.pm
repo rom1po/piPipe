@@ -13,7 +13,7 @@ use align qw ( get_hash_alignment );
 
 sub subgroups
 {
-	my ($fin, $dir, $mis, $mis_TE, $proc, $tRNAs, $rRNAs, $snRNAs, $miRNAs, $exons, $TE, $min_si, $max_si, $min_pi, $max_pi, $report ) = @_;
+	my ($fin, $dir, $mis, $mis_TE, $proc, $tRNAs, $rRNAs, $snRNAs, $miRNAs, $transcripts, $TE, $min_si, $max_si, $min_pi, $max_pi, $report ) = @_;
 	my (@files, $sum, $pie, $repar, %ismapped, %isjunk, %repartition, @junk_ref, @all_ref );
 
 	srand();
@@ -52,18 +52,18 @@ sub subgroups
 	my $bo = $tmp[1];
 	unlink $sam, $sam.'_aln.err', $sam.'_samse.err';
 
-	my $sam_exons = $dir.'exons.sam'; 
-	my $reject_exons = $dir.'rejected_exons.fastq';
-	@tmp = get_hash_alignment($exons, $mis, 0, 1, 'NA', $reject_exons, $bonafide, $proc, 'exons', $sam_exons, $report, $dir.'exons.fai');
-	$repartition{'exons'} = $tmp[0];
+	my $sam_transcripts = $dir.'transcripts.sam'; 
+	my $reject_transcripts = $dir.'rejected_transcripts.fastq';
+	@tmp = get_hash_alignment($transcripts, $mis, 0, 1, 'NA', $reject_transcripts, $bonafide, $proc, 'transcripts', $sam_transcripts, $report, $dir.'transcripts.fai');
+	$repartition{'transcripts'} = $tmp[0];
 
 	
 	my $sam_TEs = $dir.'TEs.sam';
 	my $reject_TEs = $dir.'rejected.fastq';
-	@tmp = get_hash_alignment($TE, $mis_TE, 0, 1, 'NA', $reject_TEs, $reject_exons, $proc, 'TEs', $sam_TEs, $report, $dir.'TEs.fai' );
+	@tmp = get_hash_alignment($TE, $mis_TE, 0, 1, 'NA', $reject_TEs, $reject_transcripts, $proc, 'TEs', $sam_TEs, $report, $dir.'TEs.fai' );
 	$repartition{'TEs'} = $tmp[0] ; $repartition{'others'} = $tmp[1];
 	unlink $sam, $sam.'_aln.err', $sam.'_samse.err';
-	unlink $reject_exons;
+	unlink $reject_transcripts;
 	unlink $reject_rRNAs;
 	unlink $reject_miRNAs;
 	unlink $reject_tRNAs;

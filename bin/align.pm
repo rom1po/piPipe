@@ -40,14 +40,14 @@ sub build_index
 
 sub get_unique
 {
-	my ( $sam, $s_uni, $prefix, $details, $report ) = @_;
+	my ( $sam, $s_uni, $out_prefix, $col_prefix, $details, $report ) = @_;
 
-	my $fout = $prefix.'all.fastq'; 
-	my $funi = $prefix.'unique.fastq';
-	my $frej = $prefix.'rejected.fastq';
+	my $fout = $col_prefix.'_all_mappers.fastq'; 
+	my $funi = $col_prefix.'_unique_mappers.fastq';
+	my $frej = $col_prefix.'_unmapped.fastq';
 	
-  my $repartition = $prefix.'distribution.txt';
-	my $png_rep = $prefix.'distribution.png';
+  my $repartition = $out_prefix.'distribution.txt';
+	my $png_rep = $out_prefix.'distribution.png';
 	my ( %duplicates, %genome_hits) ;
 
 	#alignement to the first reference
@@ -77,9 +77,9 @@ sub get_unique
 		histogram($size_mappedHashR, $png_rep, $total);
 
 
-		my $dup = $prefix.'dup_mapnum.txt';
-		my $dup_u = $prefix .'dup_unique.txt';
-		my $dup_r = $prefix .'dup_nonmapp.txt';
+		my $dup = $out_prefix.'dup_mapnum.txt';
+		my $dup_u = $out_prefix .'dup_unique.txt';
+		my $dup_r = $out_prefix .'dup_nonmapp.txt';
 		open(my $tab,">".$dup) || die "cannot open output txt file\n";
 		open(my $tab_r,">".$dup_r) || die "cannot open output txt file\n";
 		open(my $tab_u,">".$dup_u) || die "cannot open output txt file\n";
@@ -429,7 +429,8 @@ sub extract_sam
   close $s_uni_out; close $f_out; close $f_uni_out;
 }
 
-sub get_fastq_seq{
+sub get_fastq_seq
+{
   my $fastq = shift;
   my %hash; my $cmp = 0; 
 

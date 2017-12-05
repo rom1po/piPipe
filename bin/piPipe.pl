@@ -17,12 +17,12 @@ use html qw ( main_page details_pages menu_page ppp_page );
 use File::Copy;
 
 my ( @fastq, @fastq_n, $dir, $min, $max, $mis, $misTE, $help, $Pcheck, $mapnumf, $html_out);
-my ( $ref, $tRNAs, $rRNAs, $snRNAs, $miRNAs, $exons, $TE );
+my ( $ref, $tRNAs, $rRNAs, $snRNAs, $miRNAs, $transcripts, $TE );
 my ( $si_min, $si_max, $pi_min, $pi_max );
-my ( $build_index, $build_tRNAs, $build_rRNAs, $build_snRNAs, $build_miRNAs, $build_exons, $build_TE );
+my ( $build_index, $build_tRNAs, $build_rRNAs, $build_snRNAs, $build_miRNAs, $build_transcripts, $build_TE );
 my $max_procs = 8;
 
-( $build_index, $build_tRNAs, $build_rRNAs, $build_snRNAs, $build_miRNAs, $build_exons, $build_TE ) = (0,0,0,0,0,0,0);
+( $build_index, $build_tRNAs, $build_rRNAs, $build_snRNAs, $build_miRNAs, $build_transcripts, $build_TE ) = (0,0,0,0,0,0,0);
 ( $min, $max, $mis, $misTE, $si_min, $si_max, $pi_min, $pi_max, $dir ) = ( 18, 29, 0, 3, 21, 21, 23, 29 );
 $Pcheck ='true';
 
@@ -46,13 +46,13 @@ GetOptions (
 	"rRNAs:s" => \$rRNAs,
 	"snRNAs:s" => \$snRNAs,
 	"miRNAs:s" => \$miRNAs,
-	"exons:s" => \$exons,
+	"transcripts:s" => \$transcripts,
 	"TE:s" => \$TE,
 	"build_index" => \$build_index,
 	"build_tRNAs" => \$build_tRNAs,
 	"build_snRNAs" => \$build_snRNAs,
 	"build_miRNAs" => \$build_miRNAs,
-	"build_exons" => \$build_exons,
+	"build_transcripts" => \$build_transcripts,
 	"build_rRNAs" => \$build_rRNAs,
 	"build_TE" => \$build_TE
 );
@@ -67,7 +67,7 @@ dircopy( $FindBin::Bin.'/js', $dir.'/js' );
 my $file = $dir.'report.txt';
 open my $report, '>', $file or die "Cannot open $file $!\n";
 
-my @toBuild = ( [$build_index, \$ref],  [$build_tRNAs, \$tRNAs], [$build_rRNAs, \$rRNAs], [$build_snRNAs, \$snRNAs], [$build_miRNAs, \$miRNAs], [$build_exons, \$exons], [$build_TE, \$TE] );
+my @toBuild = ( [$build_index, \$ref],  [$build_tRNAs, \$tRNAs], [$build_rRNAs, \$rRNAs], [$build_snRNAs, \$snRNAs], [$build_miRNAs, \$miRNAs], [$build_transcripts, \$transcripts], [$build_TE, \$TE] );
 to_build ( \@toBuild, $report, $dir );
 
 my $proc_child = ceil($max_procs / scalar(@fastq));
@@ -103,11 +103,11 @@ foreach my $child ( 0 .. $#fastq )
 	my ( $name, $path, $suffix ) = fileparse( $fastq[$child], @suffix );
 	my ( $ref_name, $ref_path, $ref_suffix ) = fileparse( $ref, @suffix );
 	my ( $TE_name, $TE_path, $TE_suffix ) = fileparse( $TE, @suffix );
-	my ( $ex_name, $ex_path, $ex_suffix ) = fileparse( $exons,@suffix );
+	my ( $ex_name, $ex_path, $ex_suffix ) = fileparse( $transcripts, @suffix );
 
 	$pm->start($fastq[$child]) and next;
 
-	my $dir_fq = $dir.$name.'/';
+	my $dir_fq = $dir.$fastq_n[$child].'/';
 	mkdir $dir_fq;
 
 	my $gen_dir = $dir_fq.'genome/';
@@ -119,13 +119,14 @@ foreach my $child ( 0 .. $#fastq )
 	my $fastq_resized = $dir_fq.$name.'_'.$min.'-'.$max.'.fastq';
 	size_distribution (  $fastq[$child], $fastq_resized, $size_dir, $min, $max );
 
-	my $sam_genome = $gen_dir.$name.'_'.$min.'-'.$max.'_'.$ref_name.'.sam';
-	my $sam_genome_unique = $gen_dir.$name.'_'.$min.'-'.$max.'_'.$ref_name.'_unique.sam';
-	my $fastq_prefix = $gen_dir.$name.'_'.$min.'-'.$max.'_'.$ref_name;
+	my $sam_genome = $gen_dir.$fastq_n[$child].'_'.$min.'-'.$max.'.sam';
+	my $sam_genome_unique = $gen_dir.$fastq_n[$child].'_'.$min.'-'.$max.'_unique.sam';
+	my $fastq_prefix = $gen_dir.$fastq_n[$child].'_'.$min.'-'.$max;
 
 	BWA_call ( $ref, $fastq_resized, $sam_genome, $mis, $proc_child, $report );
-	my ( $fai_ref_hashP, $ma, $ma_uni ) = get_unique ( $sam_genome, $sam_genome_unique, $gen_dir, 1, $report );
+	my ( $fai_ref_hashP, $ma, $ma_uni ) = get_unique ( $sam_genome, $sam_genome_unique, $gen_dir, $fq_collection.$fastq_n[$child], 1, $report );
 
+	die "No Reads mapped on the genome reference!\n" if $ma == 0;
 	my $scale = 1000000 / $ma;
 	sam_to_bam_bg ( $sam_genome_unique, $scale, $proc_child );
 	sam_to_bam_bg ( $sam_genome, $scale, $proc_child );
@@ -148,9 +149,9 @@ foreach my $child ( 0 .. $#fastq )
 	bg_to_png ( $fai_file, $fastq_prefix.'_plus.bedgraph', $fastq_prefix.'_minus.bedgraph', $Gviz_dir_rand, 'Mb' );
 
 	my $group_dir = $dir_fq.'subgroups/';
-	my $fastq_uni = $gen_dir.'unique.fastq';
-	my $fastq_all = $gen_dir.'all.fastq';
-	my ($bo, $mi, $pi) = subgroups ( $fastq_all, $group_dir, $mis, $misTE, $proc_child, $tRNAs, $rRNAs, $snRNAs, $miRNAs, $exons, $TE, $si_min, $si_max, $pi_min, $pi_max, $report);
+	my $fastq_uni = $fq_collection.$fastq_n[$child].'_unique_mappers.fastq';
+	my $fastq_all = $fq_collection.$fastq_n[$child].'_all_mappers.fastq';
+	my ($bo, $mi, $pi) = subgroups ( $fastq_all, $group_dir, $mis, $misTE, $proc_child, $tRNAs, $rRNAs, $snRNAs, $miRNAs, $transcripts, $TE, $si_min, $si_max, $pi_min, $pi_max, $report);
 
 	pie_chart($group_dir);
 
@@ -172,7 +173,7 @@ foreach my $child ( 0 .. $#fastq )
 
 	rpms_rpkm( $mi_count, $mi_ref_size, $ma, $mi_count_file, $pi, $mi, $bo );
 
-	my (  $sam_exons, $sam_TEs ) = ( $group_dir.'exons.sam', $group_dir.'TEs.sam' );
+	my (  $sam_transcripts, $sam_TEs ) = ( $group_dir.'transcripts.sam', $group_dir.'TEs.sam' );
 	my @types = ($group_dir.'bonafide_reads.fastq', $group_dir.'miRNAs.fastq', $group_dir.'siRNAs.fastq', $group_dir.'piRNAs.fastq' );
 	my @types_names = ('bonafide_reads', 'miRNAs', 'siRNAs', 'piRNAs');
 	foreach my $grand_child ( 0 .. $#types )
@@ -181,30 +182,30 @@ foreach my $child ( 0 .. $#fastq )
 		my $type_prefix = $types_names[$grand_child].'-';
 		mkdir  $type_dir;
 		$pm2->start($types[$grand_child]) and next;
-		my ( $type_sam_genome, $type_sam_TEs, $type_sam_exons ) = ( $type_dir.$type_prefix.'genome.sam', $type_dir.$type_prefix.'TEs.sam', $type_dir.$type_prefix.'exons.sam' );
-		my ( $type_sam_uni_genome, $type_sam_uni_TEs,  $type_sam_uni_exons ) = ( $type_dir.$type_prefix.'genome_unique.sam', $type_dir.$type_prefix.'TEs_unique.sam', $type_dir.$type_prefix.'exons_unique.sam' );
-		my ( $type_uni_genome_fastq, $type_uni_TEs_fastq,  $type_uni_exons_fastq ) = ( $fq_collection.$type_prefix.'genome_uni.fastq', $fq_collection.$type_prefix.'TEs_uni.fastq', $fq_collection.$type_prefix.'exons_uni.fastq');
-		my ( $type_genome_fastq, $type_TEs_fastq,  $type_exons_fastq ) = ( $fq_collection.$type_prefix.'genome.fastq', $fq_collection.$type_prefix.'TEs.fastq', $fq_collection.$type_prefix.'exons.fastq');
+		my ( $type_sam_genome, $type_sam_TEs, $type_sam_transcripts ) = ( $type_dir.$type_prefix.'genome.sam', $type_dir.$type_prefix.'TEs.sam', $type_dir.$type_prefix.'transcripts.sam' );
+		my ( $type_sam_uni_genome, $type_sam_uni_TEs,  $type_sam_uni_transcripts ) = ( $type_dir.$type_prefix.'genome_unique.sam', $type_dir.$type_prefix.'TEs_unique.sam', $type_dir.$type_prefix.'transcripts_unique.sam' );
+		my ( $type_uni_genome_fastq, $type_uni_TEs_fastq,  $type_uni_transcripts_fastq ) = ( $fq_collection.$fastq_n[$child].'-'.$type_prefix.'genome_uni.fastq', $fq_collection.$fastq_n[$child].'-'.$type_prefix.'TEs_uni.fastq', $fq_collection.$fastq_n[$child].'-'.$type_prefix.'transcripts_uni.fastq');
+		my ( $type_genome_fastq, $type_TEs_fastq,  $type_transcripts_fastq ) = ( $fq_collection.$fastq_n[$child].'-'.$type_prefix.'genome.fastq', $fq_collection.$fastq_n[$child].'-'.$type_prefix.'TEs.fastq', $fq_collection.$fastq_n[$child].'-'.$type_prefix.'transcripts.fastq');
 		my $type_sequence_hashP = get_fastq_seq ( $types[$grand_child] );
 
 		if ( $grand_child == 1 )
 		{
 			BWA_call ( $TE, $types[$grand_child],  $type_sam_TEs, $misTE, $proc_child, $report );
-			BWA_call ( $exons, $types[$grand_child], $type_sam_exons, $mis, $proc_child, $report );
+			BWA_call ( $transcripts, $types[$grand_child], $type_sam_transcripts, $mis, $proc_child, $report );
 		 	BWA_call ( $ref, $types[$grand_child], $type_sam_genome, $mis, $proc_child, $report );
 			extract_sam ( undef, $type_sam_TEs, $type_sam_TEs, $type_sam_uni_TEs, $type_uni_TEs_fastq, $type_uni_TEs_fastq );
-			extract_sam ( undef, $type_sam_exons, $type_sam_exons, $type_sam_uni_exons, $type_exons_fastq, $type_uni_exons_fastq );
+			extract_sam ( undef, $type_sam_transcripts, $type_sam_transcripts, $type_sam_uni_transcripts, $type_transcripts_fastq, $type_uni_transcripts_fastq );
 			extract_sam ( undef, $type_sam_genome, $type_sam_genome, $type_sam_uni_genome, $type_genome_fastq, $type_uni_genome_fastq );
 		}
 		else
 		{
 			extract_sam ( $type_sequence_hashP, $sam_TEs, $type_sam_TEs, $type_sam_uni_TEs, $type_TEs_fastq, $type_uni_TEs_fastq );
-			extract_sam ( $type_sequence_hashP, $sam_exons, $type_sam_exons, $type_sam_uni_exons, $type_exons_fastq, $type_uni_exons_fastq );
+			extract_sam ( $type_sequence_hashP, $sam_transcripts, $type_sam_transcripts, $type_sam_uni_transcripts, $type_transcripts_fastq, $type_uni_transcripts_fastq );
 			extract_sam ( $type_sequence_hashP, $sam_genome, $type_sam_genome, $type_sam_uni_genome, $type_genome_fastq, $type_uni_genome_fastq );
 		}
 
-		my $ex_count_file =  $type_dir.'exons_reads_counts.txt';
-		my ( $ex_count, $ex_ref_size ) =  sam_count ( $type_sam_exons );
+		my $ex_count_file =  $type_dir.$type_prefix.'transcripts_reads_counts.txt';
+		my ( $ex_count, $ex_ref_size ) =  sam_count ( $type_sam_transcripts );
 		rpms_rpkm( $ex_count, $ex_ref_size, $ma, $ex_count_file, $pi, $mi, $bo );
 
 		my ( $TEs_count, $TEs_ref_size, $TEs_count_NoM, $TEs_count_M ) = sam_count_mis ( $type_sam_TEs );
@@ -216,7 +217,7 @@ foreach my $child ( 0 .. $#fastq )
 		rpms_rpkm( $TEs_count_M, $TEs_ref_size, $ma, $TEs_count_file_M, $pi, $mi, $bo );
 
 		sam_to_bam_bg ( $type_sam_TEs, $scale, $grand_child );
-		sam_sorted_bam ( $type_sam_exons, $grand_child ); sam_sorted_bam ( $type_sam_uni_exons, $grand_child ); 
+		sam_sorted_bam ( $type_sam_transcripts, $grand_child ); sam_sorted_bam ( $type_sam_uni_transcripts, $grand_child ); 
 		sam_sorted_bam ( $type_sam_uni_TEs, $grand_child ); 
 
 		my $Gviz_TEs =  $type_dir.'Gviz_TEs/';
@@ -245,15 +246,15 @@ foreach my $child ( 0 .. $#fastq )
 	if ( $Pcheck eq 'true' )
 	{
 		my $ppp = $group_dir.'PPPartners/'; mkdir $ppp;
-		print $report "ping_pong_partners $group_dir/bonafide_reads/TEs.sam $ppp\n";
-		ping_pong_partners ( $group_dir.'TEs.fai', $group_dir.'bonafide_reads/bonafide_reads-TEs_sorted.bam', $ppp, $min );
-		my $ppp_page = $dir.$fastq_n[$child].'-bonafide_reads-PPP.html';
+		print $report "ping_pong_partners $group_dir/piRNAs/TEs.sam $ppp\n";
+		ping_pong_partners ( $group_dir.'TEs.fai', $group_dir.'piRNAs/piRNAs-TEs_sorted.bam', $ppp, $pi_min );
+		my $ppp_page = $dir.$fastq_n[$child].'-piRNAs-PPP.html';
 		ppp_page ( $group_dir, $ppp_page, \@fastq_n, $fastq_n[$child], $ppp, $dir );
 	}
 
 	#HTML Main Webpage
 	my $index_page = $dir.$fastq_n[$child].'.html';
-  main_page ( $gen_dir, $index_page, \@fastq_n, $fastq_n[$child], $ma, $ma_uni, $dir );
+	main_page ( $gen_dir, $index_page, \@fastq_n, $fastq_n[$child], $ma, $ma_uni, $dir );
   copy ($index_page, $html_out) if $child == 0;
 	#HTML Menu
 	my $menu_page = $dir.$fastq_n[$child].'-sub.html';

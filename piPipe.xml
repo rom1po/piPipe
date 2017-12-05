@@ -39,11 +39,11 @@
     --miRNAs "${miRNAs.indices.fields.path}"
     #end if
 
-    #if $exons.refGenomeSource == "history":
-    --exons "${exons.ownFile}"
-    --build_exons
+    #if $transcripts.refGenomeSource == "history":
+    --transcripts "${transcripts.ownFile}"
+    --build_transcripts
     #else:
-    --exons "${exons.indices.fields.path}"
+    --transcripts "${transcripts.indices.fields.path}"
     #end if
 
     #if $TE.refGenomeSource == "history":
@@ -187,13 +187,13 @@
         <param name="ownFile" type="data" format="fasta" metadata_name="dbkey" label="Select a reference from history" />
       </when>
     </conditional>
-    <conditional name="exons">
-      <param name="refGenomeSource" type="select" label="Will you select exons database from your history or use a built-in index?">
+    <conditional name="transcripts">
+      <param name="refGenomeSource" type="select" label="Will you select transcripts database from your history or use a built-in index?">
         <option value="indexed">Use a built-in index</option>
         <option value="history">Use one from the history</option>
       </param>
       <when value="indexed">
-        <param name="indices" type="select" label="Select a exons reference">
+        <param name="indices" type="select" label="Select a transcripts reference">
           <options from_data_table="bwa_indexes">
             <filter type="sort_by" column="2" />
             <validator type="no_options" message="No indexes are available" />
